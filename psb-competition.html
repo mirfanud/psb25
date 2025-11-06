@@ -471,7 +471,7 @@ function startCompetition() {
   allScores.length = 0;
   currentRound = 0;
 
-  const rounds = ["Round 1", "Round 2", "Final Round"];
+  const rounds = ["Round 1", "Round 2", "Round 3"];
   allRounds = rounds.map(r => ({ name: r, words: [] }));
 
   renderRoundSetup(allRounds[currentRound]);
@@ -575,15 +575,16 @@ function calculateRoundScore(roundName) {
     const selected = document.querySelector(`input[name="${name}"]:checked`);
     const isProcedureCorrect = document.getElementById(`proc_${name}`)?.checked ?? false;
 
-    let marks = -1; // default
+    let marks = 0; // default
     if (selected) {
       const spelling = selected.value;
-      if (spelling === 'correct' && isProcedureCorrect) { marks = 2; correctBoth++; }
-      else if (spelling === 'correct' && !isProcedureCorrect) { marks = 0; correctSpellWrongProc++; }
-      else if (spelling === 'incorrect' && isProcedureCorrect) { marks = -1; wrongSpellCorrectProc++; }
-      else if (spelling === 'incorrect' && !isProcedureCorrect) { marks = -1; wrongBoth++; }
+      if (spelling === 'correct' && !isProcedureCorrect) { marks = 2; correctBoth++; }
+      else if (spelling === 'correct' && isProcedureCorrect) { marks = 0; correctSpellWrongProc++; }
+      else if (spelling === 'incorrect' && !isProcedureCorrect) { marks = -1; wrongSpellCorrectProc++; }
+      else if (spelling === 'incorrect' && isProcedureCorrect) { marks = -1; wrongBoth++; }
     } else {
       noAttempt++;
+      marks = -1;
     }
     score += marks;
   });
@@ -607,9 +608,10 @@ function calculateRoundScore(roundName) {
         <li>✅ Both spelling & procedure correct: ${correctBoth} × 2 = ${correctBoth * 2}</li>
         <li>⚠️ Spelling correct but procedure incorrect: ${correctSpellWrongProc} × 0 = 0</li>
         <li>❌ Spelling incorrect but procedure correct: ${wrongSpellCorrectProc} × -1 = ${wrongSpellCorrectProc * -1}</li>
-        <li>🚫 Both incorrect or no attempt: ${wrongBoth + noAttempt} × -1 = ${(wrongBoth + noAttempt) * -1}</li>
+        <li>🚫 Both incorrect: ${wrongBoth} × -1 = ${wrongBoth * -1}</li>
+        <li>🚫 No attempt: ${noAttempt} × -1 = ${noAttempt * -1}</li>  
       </ul>
-      <p><strong>Total: ${score}</strong></p>
+      <p><strong>Total:  ${correctBoth * 2} +  ${correctSpellWrongProc * 0} + ${wrongSpellCorrectProc * -1} + ${wrongBoth * -1} +  ${noAttempt * -1} = ${score}</strong></p>
     </div>`;
 
   // Go to next round
@@ -633,7 +635,7 @@ function calculateRoundScore(roundName) {
 
 function showFinalSummary() {
   const container = document.getElementById("roundContainer");
-  container.insertAdjacentHTML("beforeend", `<h2>🏁 Final Competition Summary</h2>`);
+  container.insertAdjacentHTML("beforeend", `<h2>Final Competition Summary</h2>`);
 
   let totalScore = 0;
   allScores.forEach(round => {
@@ -647,7 +649,7 @@ function showFinalSummary() {
           <li>❌ Spelling incorrect but procedure correct: ${round.wrongSpellCorrectProc} × -1 = ${round.wrongSpellCorrectProc * -1}</li>
           <li>🚫 Both incorrect or no attempt: ${(round.wrongBoth + round.noAttempt)} × -1 = ${(round.wrongBoth + round.noAttempt) * -1}</li>
         </ul>
-        <p><strong>Total Score (Round): ${round.total}</strong></p>
+        <p><strong>Total Score (${round.roundName}): ${round.total}</strong></p>
       </div>`);
   });
 
