@@ -61,7 +61,19 @@
   .word-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
   .word-line strong{color:#007bff;font-size:18px;}
   .play-btn{background:#28a745;color:#fff;border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .play-btn:hover{background:#1e7e34;}
+  .play-typed-btn {
+    background: ##ff7f0e;
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+.play-btn:hover{background:#1e7e34;}
   .score-section{margin-top:10px;font-weight:bold;text-align:center;}
   #progress{text-align:center;margin-top:1rem;font-weight:bold;}
   .marking{margin-top:5px;}
@@ -523,6 +535,8 @@ async function pickRandomWords(roundName) {
       if (Array.isArray(data) && data.length > 0 && data[0].shortdef) {
         const entry = data[0];
         const wordText = entry.meta.id.split(":")[0];
+        const normalizedNote = (word.toLowerCase() !== wordText.toLowerCase())  ? `<small style="color:#888">(base: ${wordText})</small>`  : "";
+
         const definition = entry.shortdef[0] || "No definition available.";
         const pronunciation = entry.hwi?.prs?.[0]?.mw || "";
         const soundFile = entry.hwi?.prs?.[0]?.sound?.audio || "";
@@ -539,9 +553,14 @@ async function pickRandomWords(roundName) {
         results.push(`
           <div class='word-block'>
             <div class='word-line'>
-              <strong>${wordText}</strong>
+              <strong>${word}</strong>
               ${pronunciation ? `<span> /${pronunciation}/ </span>` : ""}
-              <button class="play-btn" onclick="playSound('${audioUrl}', '${wordText}')">🔊</button>
+      ${word.toLowerCase() === wordText.toLowerCase() 
+        ? `<button class="play-btn" onclick="playSound('${audioUrl}', '${wordText}')">🔊</button>`
+        : `<button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+           [${normalizedNote}
+           <button class="play-typed-btn" onclick="playSound('${audioUrl}', '${wordText}')">🔊</button>]`
+      }
             </div>
             <div>– ${definition}</div>
             <div>
