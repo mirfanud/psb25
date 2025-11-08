@@ -116,6 +116,18 @@
     justify-content: center;
     cursor: pointer;
   }
+    .play-typed-btn {
+    background: ##ff7f0e;
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
   .play-btn:hover {
     background: #1e7e34;
   }
@@ -593,6 +605,9 @@ async function generateDefinitions() {
 
       if (Array.isArray(data) && data.length > 0 && data[0].shortdef) {
         const entry = data[0];
+        const rootForm = entry.meta.id.split(":")[0];
+        const normalizedNote = (word.toLowerCase() !== rootForm.toLowerCase())  ? `<small style="color:#888">(base: ${rootForm})</small>`  : "";
+
         const definition = entry.shortdef[0] || "No definition available.";
         const pronunciation = entry.hwi?.prs?.[0]?.mw || "";
         const soundFile = entry.hwi?.prs?.[0]?.sound?.audio || "";
@@ -610,7 +625,16 @@ async function generateDefinitions() {
             <div class='word-line'>
               <strong>${entry.meta.id.split(":")[0]}</strong>
               ${pronunciation ? `<span>/${pronunciation}/</span>` : ""}
-              <button class="play-btn" onclick="playSound('${audioUrl}', '${entry.meta.id.split(":")[0]}')">🔊</button>
+              
+              
+      ${word.toLowerCase() === rootForm.toLowerCase() 
+        ? `<button class="play-btn" onclick="playSound('${audioUrl}', '${rootForm}')">🔊</button>`
+        : `<button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+           [${normalizedNote}
+           <button class="play-typed-btn" onclick="playSound('${audioUrl}', '${rootForm}')">🔊</button>]`
+      }
+
+
             </div>
             <div>– ${definition}</div>
           </div>
