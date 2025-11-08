@@ -582,6 +582,85 @@ async function generateDefinitions() {
     return;
   }
 
+  const apiKey = "d99bc6e5-e4ef-414f-a72f-5d597b925fdd";
+  const total = wordList.length;
+  let processed = 0;
+
+  for (const word of wordList) {
+    try {
+      const res = await fetch(`https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`);
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0 && data[0].shortdef) {
+        const entry = data[0];
+        const definition = entry.shortdef[0] || "No definition available.";
+        const pronunciation = entry.hwi?.prs?.[0]?.mw || "";
+        const soundFile = entry.hwi?.prs?.[0]?.sound?.audio || "";
+        let audioUrl = "";
+
+        if (soundFile) {
+          const subdir = /^[0-9]/.test(soundFile[0])
+            ? "number"
+            : soundFile[0];
+          audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${soundFile}.mp3`;
+        }
+
+        output.innerHTML += `
+          <div class='word-block'>
+            <div class='word-line'>
+              <strong>${entry.meta.id.split(":")[0]}</strong>
+              ${pronunciation ? `<span>/${pronunciation}/</span>` : ""}
+              <button class="play-btn" onclick="playSound('${audioUrl}', '${entry.meta.id.split(":")[0]}')">🔊</button>
+            </div>
+            <div>– ${definition}</div>
+          </div>
+        `;
+      } else {
+        output.innerHTML += `
+          <div class='word-block'>
+            <div class='word-line'>
+              <strong>${word}</strong>
+              <button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+            </div>
+            <div>– No definition found.</div>
+          </div>
+        `;
+      }
+    } catch (err) {
+      output.innerHTML += `
+        <div class='word-block'>
+          <div class='word-line'>
+            <strong>${word}</strong>
+            <button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+          </div>
+          <div>– Error fetching data.</div>
+        </div>
+      `;
+      console.error("Error fetching:", word, err);
+    }
+
+    processed++;
+    progress.textContent = `Processed ${processed} of ${total} words...`;
+    await new Promise(r => setTimeout(r, 500)); // small delay to avoid rate limits
+  }
+
+  progress.textContent = `✅ Completed! Processed ${total} words.`;
+}
+
+
+/*async function generateDefinitions() {
+  const inputText = document.getElementById('inputWords').value.trim();
+  const output = document.getElementById('output');
+  const progress = document.getElementById('progress');
+  output.innerHTML = "";
+  progress.textContent = "";
+
+  const wordList = inputText.split(/[\s,]+/).filter(Boolean);
+  if (wordList.length === 0) {
+    output.innerHTML = "<p>Please enter some words.</p>";
+    return;
+  }
+
   const total = wordList.length;
   let processed = 0;
 
@@ -637,7 +716,7 @@ async function generateDefinitions() {
   }
 
   progress.textContent = `✅ Completed! Processed ${total} words.`;
-}
+}*/
 
 function playSound(audioUrl, word) {
   if (audioUrl) {
