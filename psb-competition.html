@@ -511,6 +511,105 @@ async function pickRandomWords(roundName) {
   allRounds.find(r => r.name === roundName).words = selected;
 
   const results = [];
+  const apiKey = "d99bc6e5-e4ef-414f-a72f-5d597b925fdd";
+
+  for (const word of selected) {
+    try {
+      const res = await fetch(
+        `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`
+      );
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0 && data[0].shortdef) {
+        const entry = data[0];
+        const wordText = entry.meta.id.split(":")[0];
+        const definition = entry.shortdef[0] || "No definition available.";
+        const pronunciation = entry.hwi?.prs?.[0]?.mw || "";
+        const soundFile = entry.hwi?.prs?.[0]?.sound?.audio || "";
+        let audioUrl = "";
+
+        // Construct correct Merriam-Webster audio URL
+        if (soundFile) {
+          const subdir = /^[0-9]/.test(soundFile[0])
+            ? "number"
+            : soundFile[0];
+          audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${soundFile}.mp3`;
+        }
+
+        results.push(`
+          <div class='word-block'>
+            <div class='word-line'>
+              <strong>${wordText}</strong>
+              ${pronunciation ? `<span> /${pronunciation}/ </span>` : ""}
+              <button class="play-btn" onclick="playSound('${audioUrl}', '${wordText}')">🔊</button>
+            </div>
+            <div>– ${definition}</div>
+            <div>
+              <label><input type="radio" name="${roundName}_${wordText}" value="correct"> Correct</label>
+              <label><input type="radio" name="${roundName}_${wordText}" value="incorrect"> Incorrect</label>
+              <label><input type="checkbox" id="proc_${roundName}_${wordText}"> Incorrect Procedure</label>
+            </div>
+          </div>
+        `);
+      } else {
+        results.push(`
+          <div class='word-block'>
+            <strong>${word}</strong> – No definition found.
+            <button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+            <div>
+              <label><input type="radio" name="${roundName}_${word}" value="correct"> Correct</label>
+              <label><input type="radio" name="${roundName}_${word}" value="incorrect"> Incorrect</label>
+              <label><input type="checkbox" id="proc_${roundName}_${word}"> Incorrect Procedure</label>
+            </div>
+          </div>
+        `);
+      }
+    } catch (e) {
+      results.push(`
+        <div class='word-block'>
+          <strong>${word}</strong> – Error fetching data.
+          <button class="play-btn" onclick="playSound('', '${word}')">🔊</button>
+          <div>
+            <label><input type="radio" name="${roundName}_${word}" value="correct"> Correct</label>
+            <label><input type="radio" name="${roundName}_${word}" value="incorrect"> Incorrect</label>
+            <label><input type="checkbox" id="proc_${roundName}_${word}"> Incorrect Procedure</label>
+          </div>
+        </div>
+      `);
+    }
+
+    // optional delay to avoid rate limits
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  outputDiv.innerHTML =
+    results.join("") +
+    `
+    <br/>
+    <button onclick="calculateRoundScore('${roundName}')">Calculate ${roundName} Score</button>
+  `;
+}
+
+
+  
+/*async function pickRandomWords(roundName) {
+  const input = document.getElementById(`wordList_${roundName}`).value.trim();
+  const outputDiv = document.getElementById(`output_${roundName}`);
+  outputDiv.innerHTML = "<em>Loading definitions...</em>";
+
+  const words = input.split(/[\s,]+/).filter(Boolean);
+  if (words.length < 10) {
+    alert("Please enter at least 10 words for this round.");
+    outputDiv.innerHTML = "";
+    return;
+  }
+
+  // Randomly select 10 words
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, 10);
+  allRounds.find(r => r.name === roundName).words = selected;
+
+  const results = [];
   for (const word of selected) {
     try {
       const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
@@ -557,7 +656,7 @@ async function pickRandomWords(roundName) {
     <br/>
     <button onclick="calculateRoundScore('${roundName}')">Calculate ${roundName} Score</button>
   `;
-}
+}*/
 
 function calculateRoundScore(roundName) {
   let score = 0;
